@@ -7,6 +7,7 @@ import { ClientProxyFactory, Transport } from '@nestjs/microservices';
 import { ProfileSchema } from './schemas/profile.schema';
 import { UserSchema } from './schemas/user.schema';
 import { SharedModule } from '@app/shared';
+import { ZodiacEnd } from './schemas/zodiac.schema';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { SharedModule } from '@app/shared';
     }),
     MongooseModule.forFeature([{ name: 'User', schema: UserSchema }]),
     MongooseModule.forFeature([{ name: 'Profile', schema: ProfileSchema }]),
+    MongooseModule.forFeature([{ name: 'ZodiacEnd', schema: ZodiacEnd }]),
     SharedModule,
   ],
   controllers: [UserController],

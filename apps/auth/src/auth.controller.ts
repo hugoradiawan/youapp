@@ -27,7 +27,7 @@ export class AuthController {
   async login(@Ctx() context: RmqContext): Promise<Jwt | null> {
     const extractedData = this.sharedService.extractData<LoginUserDto>(context);
     const result = await this.authService.login(extractedData.event.data);
-    if (!result === undefined || result === null) {
+    if (!result || result === null) {
       extractedData.nack();
       return null;
     }
