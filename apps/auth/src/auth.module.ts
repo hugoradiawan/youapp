@@ -5,6 +5,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ClientProxyFactory, Transport } from '@nestjs/microservices';
 import { JwtModule } from '@nestjs/jwt';
 import { jwtConstants } from './constants';
+import { SharedModule } from '@app/shared';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { jwtConstants } from './constants';
       secret: jwtConstants.secret,
       signOptions: { expiresIn: '2 days' },
     }),
+    SharedModule,
   ],
   controllers: [AuthController],
   providers: [

@@ -4,41 +4,40 @@ import { Ctx, MessagePattern, RmqContext } from '@nestjs/microservices';
 import { User } from '@app/shared/interfaces/user.interface';
 import { CreateUserDto } from '@app/shared/dto/create-user.dto';
 import { EmailAndUsernameDto } from '@app/shared/dto/emailAndUsername.dto';
-import { RabbitMQMessage } from '@app/shared/dto/rmq-event.dto';
+import { SharedService } from '@app/shared';
 
 @Controller()
 export class UserController {
-  constructor(private readonly userService: UserService) {}
+  constructor(
+    private readonly userService: UserService,
+    private readonly sharedService: SharedService,
+  ) {}
 
   @MessagePattern('find-user-by-email-or-username')
   async register(@Ctx() context: RmqContext): Promise<User | null> {
-    const channel = context.getChannelRef();
-    const message = context.getMessage().content.toString();
-    const event = JSON.parse(message) as RabbitMQMessage<EmailAndUsernameDto>;
-    console.log(event);
+    const extractData =
+      this.sharedService.extractData<EmailAndUsernameDto>(context);
     const result = await this.userService.findOneByEmailOrByUsername(
-      event.data,
+      extractData.event.data,
     );
     if (!result || result === null) {
-      channel.ack(context.getMessage());
+      extractData.nack();
       return null;
     } else {
+      extractData.ack();
       return result;
     }
   }
 
   @MessagePattern('create-user')
   async createUser(@Ctx() context: RmqContext) {
-    const channel = context.getChannelRef();
-    const message = context.getMessage().content.toString();
-    const event = JSON.parse(message) as RabbitMQMessage<CreateUserDto>;
-    console.log(event);
-    const result = await this.userService.create(event.data);
+    const extractData = this.sharedService.extractData<CreateUserDto>(context);
+    const result = await this.userService.create(extractData.event.data);
     if (!result || result === null) {
-      channel.nack(context.getMessage());
+      extractData.nack();
       return null;
     } else {
-      channel.ack(context.getMessage());
+      extractData.ack();
       return result;
     }
   }

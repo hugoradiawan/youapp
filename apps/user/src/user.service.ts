@@ -39,7 +39,6 @@ export class UserService {
   async findOneByEmailOrByUsername(
     emailOrUsername: EmailAndUsernameDto,
   ): Promise<User | null> {
-    console.log(emailOrUsername.username);
     return this.userModel
       .findOne({
         $or: [
