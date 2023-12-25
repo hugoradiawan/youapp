@@ -45,6 +45,15 @@
       "compilerOptions": {
         "tsConfigPath": "apps/user/tsconfig.app.json"
       }
+    },
+    "gridfs": {
+      "type": "application",
+      "root": "apps/gridfs",
+      "entryFile": "main",
+      "sourceRoot": "apps/gridfs/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/gridfs/tsconfig.app.json"
+      }
     }
   }
 }
