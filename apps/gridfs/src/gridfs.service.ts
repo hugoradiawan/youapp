@@ -17,10 +17,10 @@ export class GridfsService {
     });
   }
 
-  async saveFile(file: Express.Multer.File): Promise<boolean> {
+  async saveFile(file: Express.Multer.File): Promise<void> {
     const readStream = new Readable();
     readStream._read = () => {};
-    readStream.push(file.buffer.buffer);
+    readStream.push(file.buffer);
     readStream.push(null);
 
     const uploadStream = this.gfs.openUploadStream(file.originalname, {
@@ -28,14 +28,11 @@ export class GridfsService {
     });
 
     readStream.pipe(uploadStream);
-    return new Promise((resolve, reject) => {
-      uploadStream.on('error', (error) => reject(error));
-      uploadStream.on('finish', () => resolve(true));
-    });
   }
 
   async deleteFile(filename: string): Promise<void> {
     const file = await this.gfs.find({ filename }).toArray();
+    console.log(file);
     if (!file || file.length === 0) {
       return;
     }

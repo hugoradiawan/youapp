@@ -3,14 +3,11 @@ import {
   Controller,
   Get,
   Inject,
-  Param,
   Post,
   Put,
   Req,
   Res,
-  UploadedFile,
   UseGuards,
-  UseInterceptors,
 } from '@nestjs/common';
 import { Response } from 'express';
 import { CreateUserDto } from '@app/shared/dto/create-user.dto';
@@ -29,8 +26,6 @@ import {
 import { ProfileAndUser } from '@app/shared/interfaces/profile-and-user';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { HoroscopeZodiac } from '../../../libs/shared/src/interfaces/horoscope-zodiac.interface';
-import { FileInterceptor } from '@nestjs/platform-express';
-import { Readable } from 'stream';
 
 @Controller('api')
 export class AppController {
@@ -173,37 +168,6 @@ export class AppController {
       },
     };
     return res.status(200).json(response);
-  }
-
-  @Put('upload')
-  @UseInterceptors(FileInterceptor('file'))
-  async uploadFile(
-    @UploadedFile() file: Express.Multer.File,
-    @Res() res: Response,
-  ): Promise<Response> {
-    const result: boolean = await firstValueFrom(
-      this.gridfsService.send('save-file', file),
-    );
-    if (!result || result === null) {
-      return res.status(500).json({
-        isOk: false,
-        errorCode: 1007,
-        message: 'Failed to upload file',
-      });
-    } else {
-      return res.status(200).send();
-    }
-  }
-
-  @Get('file/:filename')
-  async getFile(@Param('filename') filename: string, @Res() res: Response) {
-    const readStream: Readable = await firstValueFrom(
-      this.gridfsService.send('get-file', filename),
-    );
-    if (!readStream) {
-      return res.status(404).send();
-    }
-    readStream.pipe<Response>(res);
   }
 
   private getHoroscopeZodiac(

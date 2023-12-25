@@ -1,42 +1,32 @@
-import { Controller } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Param,
+  Put,
+  Res,
+  UploadedFile,
+  UseInterceptors,
+} from '@nestjs/common';
 import { GridfsService } from './gridfs.service';
-import { RmqContext, MessagePattern, Ctx } from '@nestjs/microservices';
-import { SharedService } from '@app/shared';
-import { Readable } from 'stream';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { Response } from 'express';
 
-@Controller()
+@Controller('api')
 export class GridfsController {
-  constructor(
-    private readonly gridfsService: GridfsService,
-    private readonly sharedService: SharedService,
-  ) {}
+  constructor(private readonly gridfsService: GridfsService) {}
 
-  @MessagePattern('save-file')
-  async uploadFile(@Ctx() context: RmqContext): Promise<boolean> {
-    const extractData =
-      this.sharedService.extractData<Express.Multer.File>(context);
-    const result = await this.gridfsService.saveFile(extractData.event.data);
-    if (!result || result === null) {
-      extractData.nack();
-      return null;
-    } else {
-      extractData.ack();
-      return result;
-    }
+  @Put('upload')
+  @UseInterceptors(FileInterceptor('file'))
+  async uploadFile(@UploadedFile() file: Express.Multer.File) {
+    await this.gridfsService.saveFile(file);
   }
 
-  @MessagePattern('get-file')
-  async getFile(
-    @Ctx() context: RmqContext,
-  ): Promise<Promise<Readable | undefined>> {
-    const extractData = this.sharedService.extractData<string>(context);
-    const result = await this.gridfsService.getFile(extractData.event.data);
-    if (!result || result === null) {
-      extractData.nack();
-      return null;
-    } else {
-      extractData.ack();
-      return result;
+  @Get('file/:filename')
+  async getFile(@Param('filename') filename: string, @Res() res: Response) {
+    const readStream = await this.gridfsService.getFile(filename);
+    if (!readStream) {
+      return res.status(404).send();
     }
+    readStream.pipe<Response>(res);
   }
 }
