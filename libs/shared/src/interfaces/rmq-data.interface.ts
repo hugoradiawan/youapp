@@ -25,4 +25,8 @@ export class RmqData<T> implements IRmqData<T> {
   ack(): void {
     this.channel.ack(this.message);
   }
+
+  get data(): T {
+    return this.event.data;
+  }
 }

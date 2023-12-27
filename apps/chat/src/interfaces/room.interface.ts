@@ -1,8 +1,10 @@
+import { ObjectId } from 'mongoose';
 import { Message } from './messgae.interface';
 
 export interface Room {
+  _id: ObjectId;
   users: string[];
   message: Message[];
 }
 
-export interface ProfileDocument extends Document, Room {}
+export interface RoomDocument extends Document, Room {}

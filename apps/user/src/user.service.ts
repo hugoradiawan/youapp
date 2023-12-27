@@ -4,7 +4,6 @@ import { User } from '@app/shared/interfaces/user.interface';
 import { Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import * as bcrypt from 'bcrypt';
 import { Profile } from './interfaces/profile.interface';
 import { CreateProfileDto } from './dto/create-profile.dto';
 import { ProfileAndUser } from '@app/shared/interfaces/profile-and-user';
@@ -30,7 +29,7 @@ export class UserService {
 
   async create(createUserDto: CreateUserDto): Promise<string | undefined> {
     const createdUser = new this.userModel(createUserDto);
-    createdUser.password = await bcrypt.hash(createdUser.password, 10);
+    // createdUser.password = await bcrypt.hash(createdUser.password, 10);
     const result = await createdUser.save();
     this.createProfile(result._id.toString(), {});
     return result._id.toString();
@@ -72,6 +71,17 @@ export class UserService {
 
   async findOneById(id: string): Promise<User | null> {
     return this.userModel.findById(id).exec();
+  }
+
+  async findAllProfile(userId: string): Promise<Profile[]> {
+    const profile = await this.profileModel.findOne({ userId }).exec();
+    if (!profile) return [];
+    const profiles = await this.profileModel
+      .find({
+        _id: { $ne: profile._id },
+      })
+      .exec();
+    return profiles;
   }
 
   async getProfileAndUser(userId: string): Promise<ProfileAndUser | null> {

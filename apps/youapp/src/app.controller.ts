@@ -32,7 +32,6 @@ export class AppController {
   constructor(
     @Inject('AUTH_SERVICE') private readonly authService: ClientProxy,
     @Inject('USER_SERVICE') private readonly userService: ClientProxy,
-    @Inject('GRIDFS_SERVICE') private readonly gridfsService: ClientProxy,
   ) {}
 
   @Post('register')
@@ -43,6 +42,7 @@ export class AppController {
     const result: boolean | ErrorData = await firstValueFrom(
       this.authService.send('register', createUserDto),
     );
+    console.log('result', result);
     if ((result as ErrorData).statusCode) {
       return this.buildErrorReponse(
         res,
@@ -62,7 +62,7 @@ export class AppController {
     const jwt = await firstValueFrom(
       this.authService.send('login', loginUserDto),
     );
-    const isJwtValid = jwt !== undefined || jwt !== null;
+    const isJwtValid = jwt !== null;
     return res.status(!jwt ? 401 : 200).json({
       isOk: isJwtValid,
       message: !isJwtValid ? 'Invalid username, email or password' : undefined,
@@ -167,6 +167,22 @@ export class AppController {
         zodiac: result.zodiac,
       },
     };
+    return res.status(200).json(response);
+  }
+
+  @Get('profiles')
+  @UseGuards(AuthGuard)
+  async getAllProfile(@Req() req: AuthRequest, @Res() res: Response) {
+    const jwtPayload = req.payload;
+    let profiles: Profile[] = await firstValueFrom(
+      this.userService.send('get-all-profiles', jwtPayload.sub),
+    );
+    profiles = profiles.filter((profile) => profile.name !== undefined);
+    const response: ServerResponse<Profile[]> = {
+      isOk: true,
+      data: profiles,
+    };
+
     return res.status(200).json(response);
   }
 

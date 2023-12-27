@@ -18,7 +18,7 @@ export class AuthController {
   async register(@Ctx() context: RmqContext): Promise<boolean | ErrorData> {
     const extractedData =
       this.sharedService.extractData<CreateUserDto>(context);
-    const result = await this.authService.register(extractedData.event.data);
+    const result = await this.authService.register(extractedData.data);
     extractedData.ack();
     return result;
   }
@@ -26,8 +26,8 @@ export class AuthController {
   @MessagePattern('login')
   async login(@Ctx() context: RmqContext): Promise<Jwt | null> {
     const extractedData = this.sharedService.extractData<LoginUserDto>(context);
-    const result = await this.authService.login(extractedData.event.data);
-    if (!result || result === null) {
+    const result = await this.authService.login(extractedData.data);
+    if (result === null) {
       extractedData.nack();
       return null;
     }

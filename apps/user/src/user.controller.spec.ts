@@ -60,6 +60,7 @@ describe('UserController', () => {
       const mockExtractData = {
         ack: jest.fn(),
         nack: jest.fn(),
+        data: mockUser,
         channel: {} as Channel,
         message: {} as Message,
         event: {

@@ -21,9 +21,9 @@ export class UserController {
     const extractData =
       this.sharedService.extractData<EmailAndUsernameDto>(context);
     const result = await this.userService.findOneByEmailOrByUsername(
-      extractData.event.data,
+      extractData.data,
     );
-    if (!result || result === null) {
+    if (result === null) {
       extractData.nack();
       return null;
     } else {
@@ -35,8 +35,8 @@ export class UserController {
   @MessagePattern('create-user')
   async createUser(@Ctx() context: RmqContext) {
     const extractData = this.sharedService.extractData<CreateUserDto>(context);
-    const result = await this.userService.create(extractData.event.data);
-    if (!result || result === null) {
+    const result = await this.userService.create(extractData.data);
+    if (result === null) {
       extractData.nack();
       return null;
     } else {
@@ -50,10 +50,8 @@ export class UserController {
     @Ctx() context: RmqContext,
   ): Promise<ProfileAndUser | null> {
     const extractData = this.sharedService.extractData<string>(context);
-    const result = await this.userService.getProfileAndUser(
-      extractData.event.data,
-    );
-    if (!result || result === null) {
+    const result = await this.userService.getProfileAndUser(extractData.data);
+    if (result === null) {
       extractData.nack();
       return null;
     } else {
@@ -67,8 +65,8 @@ export class UserController {
     @Ctx() context: RmqContext,
   ): Promise<HoroscopeZodiac | null> {
     const extractData = this.sharedService.extractData<string>(context);
-    const result = this.userService.getHoroscopeZodiac(extractData.event.data);
-    if (!result || result === null) {
+    const result = this.userService.getHoroscopeZodiac(extractData.data);
+    if (result === null) {
       extractData.nack();
       return null;
     } else {
@@ -82,12 +80,10 @@ export class UserController {
     const extractData = this.sharedService.extractData<
       UpdateProfileDto & HoroscopeZodiac & { userId: string }
     >(context);
-    console.log('toUpdate 1', extractData.event.data);
-    const toUpdate = { ...extractData.event.data };
+    const toUpdate = { ...extractData.data };
     delete toUpdate.userId;
-    console.log('toUpdate 2', toUpdate);
     const result = await this.userService.updateProfile(
-      extractData.event.data.userId,
+      extractData.data.userId,
       toUpdate,
     );
     if (result === false) {
@@ -96,6 +92,19 @@ export class UserController {
     } else {
       extractData.ack();
       return true;
+    }
+  }
+
+  @MessagePattern('get-all-profiles')
+  async getAllProfile(@Ctx() context: RmqContext) {
+    const extractData = this.sharedService.extractData<string>(context);
+    const result = await this.userService.findAllProfile(extractData.data);
+    if (result === null) {
+      extractData.nack();
+      return null;
+    } else {
+      extractData.ack();
+      return result;
     }
   }
 }
