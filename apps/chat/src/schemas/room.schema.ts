@@ -2,6 +2,7 @@ import { Schema } from 'mongoose';
 
 export const RoomSchema = new Schema({
   users: [String],
+  lastMessage: String,
   message: [
     {
       text: String,
@@ -12,6 +13,7 @@ export const RoomSchema = new Schema({
         firstName: String,
         customProperties: [],
       },
+      createdAt: String,
     },
   ],
 });

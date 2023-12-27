@@ -29,10 +29,32 @@ export class ChatGateway {
     this.server.to(room._id.toString()).emit('getRoomId', room._id.toString());
   }
 
-  @SubscribeMessage('message')
+  @SubscribeMessage('sentMessage')
   handleMessage(@MessageBody() data: Message): void {
     console.log(data);
-    this.server.to(data.roomId).emit('message', data);
-    // this.chatService.saveMessage(data);
+    this.server.to(data.roomId).emit('onMessage', data);
+    this.chatService.saveMessage(data);
+  }
+
+  @SubscribeMessage('quitRoom')
+  async handleQuitRoom(
+    @MessageBody() data: { userId: string; roomId: string },
+    @ConnectedSocket() client: Socket,
+  ): Promise<void> {
+    console.log(data);
+    client.leave(data.roomId);
+    const list = await this.chatService.getList(data.userId);
+    client.send(list);
+  }
+
+  @SubscribeMessage('requestList')
+  async addChatList(
+    @MessageBody() data: { userId: string; roomId: string },
+    @ConnectedSocket() client: Socket,
+  ): Promise<void> {
+    console.log('data', data);
+    const list = await this.chatService.getList(data.userId);
+    console.log('list', list);
+    client.send(list);
   }
 }

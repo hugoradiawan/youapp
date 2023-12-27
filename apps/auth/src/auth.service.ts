@@ -8,7 +8,7 @@ import { firstValueFrom } from 'rxjs';
 import { LoginUserDto } from '../../../libs/shared/src/interfaces/login-user.dto';
 import { Jwt, JwtPayload } from './interface/jwt.interface';
 import { JwtService } from '@nestjs/jwt';
-import * as bcrypt from 'bcrypt';
+// import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class AuthService {
@@ -62,7 +62,8 @@ export class AuthService {
       } as EmailAndUsernameDto),
     );
     if (user === null) return null;
-    const isPasswordMatched = await bcrypt.compare(password, user.password);
+    // const isPasswordMatched = await bcrypt.compare(password, user.password);
+    const isPasswordMatched = password === user.password;
     return isPasswordMatched ? user : null;
   }
 }

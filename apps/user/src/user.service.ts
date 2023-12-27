@@ -17,6 +17,7 @@ import { ZodiacEndDocument } from './interfaces/zodiac-end.interface';
 import { zodiacList } from './enums/zodiac.enum';
 import { zodiacEndList } from './constants/zodiac-end-init.constant';
 import { UpdateProfileDto } from 'apps/youapp/src/dto/update-profile.dto';
+// import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class UserService {
@@ -46,6 +47,32 @@ export class UserService {
     const createdProfile = new this.profileModel(profile);
     const result = await createdProfile.save();
     return result !== null;
+  }
+
+  async getProfileNames(
+    ids: string[],
+  ): Promise<{ id: string; name: string }[]> {
+    console.log('ids', ids);
+    // get all profiles with id in ids
+    console.log(
+      'data',
+      (await this.profileModel.find({ _id: { $in: ids } }).exec()).map(
+        (profile) => {
+          return {
+            id: profile._id.toString(),
+            name: profile.name,
+          };
+        },
+      ),
+    );
+    return (await this.profileModel.find({ _id: { $in: ids } }).exec()).map(
+      (profile) => {
+        return {
+          id: profile._id.toString(),
+          name: profile.name,
+        };
+      },
+    );
   }
 
   async findOneByEmailOrByUsername(

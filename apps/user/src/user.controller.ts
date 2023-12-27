@@ -20,11 +20,12 @@ export class UserController {
   async register(@Ctx() context: RmqContext): Promise<User | null> {
     const extractData =
       this.sharedService.extractData<EmailAndUsernameDto>(context);
+    console.log(extractData.data);
     const result = await this.userService.findOneByEmailOrByUsername(
       extractData.data,
     );
     if (result === null) {
-      extractData.nack();
+      extractData.ack();
       return null;
     } else {
       extractData.ack();
@@ -102,6 +103,22 @@ export class UserController {
     if (result === null) {
       extractData.nack();
       return null;
+    } else {
+      extractData.ack();
+      return result;
+    }
+  }
+
+  @MessagePattern('get-profile-names')
+  async getProfiles(
+    @Ctx() context: RmqContext,
+  ): Promise<{ id: string; name: string }[]> {
+    const extractData = this.sharedService.extractData<string[]>(context);
+    const result: { id: string; name: string }[] =
+      await this.userService.getProfileNames(extractData.data);
+    if (result === null) {
+      extractData.ack();
+      return [];
     } else {
       extractData.ack();
       return result;

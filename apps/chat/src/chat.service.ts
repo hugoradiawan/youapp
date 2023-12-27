@@ -1,12 +1,18 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Message } from './interfaces/messgae.interface';
 import { Room } from './interfaces/room.interface';
+import { ClientProxy } from '@nestjs/microservices';
+import { Chat } from './interfaces/chat.interface';
+import { firstValueFrom } from 'rxjs';
 
 @Injectable()
 export class ChatService {
-  constructor(@InjectModel('Room') private readonly roomModel: Model<Room>) {}
+  constructor(
+    @InjectModel('Room') private readonly roomModel: Model<Room>,
+    @Inject('USER_SERVICE') private readonly userService: ClientProxy,
+  ) {}
 
   async createRoom(userIds: string[]): Promise<Room | null> {
     const room = await this.roomModel
@@ -34,11 +40,41 @@ export class ChatService {
     return room.message;
   }
 
+  async getList(userId: string): Promise<Chat[]> {
+    const rooms = await this.roomModel
+      .find({ users: { $in: [userId] } })
+      .exec();
+    const profileIds = rooms.map((room) => {
+      return room.users.filter((user) => user !== userId)[0];
+    });
+    const names: { id: string; name: string }[] = await firstValueFrom(
+      this.userService.send('get-profile-names', profileIds),
+    );
+    console.log('names', names);
+    const result = rooms.map((room) => {
+      const proIds = room.users.filter((user) => user !== userId);
+      return {
+        name: names.map((name) => {
+          if (name.id === proIds[0]) {
+            return name.name;
+          }
+        }),
+        profileId: proIds,
+        lastMesage: room.lastMessage,
+      } as Chat;
+    });
+    console.log(result);
+    return result;
+  }
+
   async saveMessage(message: Message): Promise<boolean> {
     const room = await this.roomModel.findOne({ _id: message.roomId }).exec();
     if (!room) {
       return false;
     }
+    room.lastMessage = message.text;
+    const tempMsg = { ...message };
+    delete tempMsg.roomId;
     room.message.push(message);
     await room.save();
     return true;

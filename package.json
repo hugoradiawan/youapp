@@ -33,7 +33,7 @@
     "@types/socket.io": "^3.0.2",
     "amqp-connection-manager": "^4.1.14",
     "amqplib": "^0.10.3",
-    "bcrypt": "^5.1.1",
+    "bcrypt": "^3.0.4-napi",
     "class-validator": "^0.14.0",
     "mongo-gridfs": "^1.1.0",
     "mongoose": "^8.0.3",
