@@ -8,8 +8,8 @@ import { firstValueFrom } from 'rxjs';
 import { LoginUserDto } from '../../../libs/shared/src/interfaces/login-user.dto';
 import { Jwt, JwtPayload } from './interface/jwt.interface';
 import { JwtService } from '@nestjs/jwt';
-import { Scrypt } from 'apps/user/src/scrypt';
 import { UpdatePassword } from 'apps/user/src/dto/update-password.dto';
+import { Scrypt } from '@app/shared/scrypt';
 
 @Injectable()
 export class AuthService {

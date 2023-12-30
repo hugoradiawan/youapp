@@ -7,7 +7,7 @@ import { EmailAndUsernameDto } from '@app/shared/dto/emailAndUsername.dto';
 import { Channel, Message } from 'amqplib';
 import { RabbitMQMessage } from '@app/shared/dto/rmq-event.dto';
 import { User } from '@app/shared/interfaces/user.interface';
-import { RmqContext } from '@nestjs/microservices';
+import { ClientProxy, RmqContext } from '@nestjs/microservices';
 import { Model } from 'mongoose';
 import { getModelToken } from '@nestjs/mongoose';
 
@@ -15,9 +15,15 @@ describe('UserController', () => {
   let userService: UserService;
   let sharedService: SharedService;
   let userController: UserController;
+  let authService: ClientProxy;
   let userModel: Model<User>;
 
   beforeEach(async () => {
+    authService = {
+      send: jest.fn().mockImplementation(() => ({
+        toPromise: jest.fn().mockResolvedValueOnce({}),
+      })),
+    } as any;
     const app: TestingModule = await Test.createTestingModule({
       controllers: [UserController],
       providers: [
@@ -41,6 +47,7 @@ describe('UserController', () => {
           provide: getModelToken('ZodiacEnd'),
           useValue: {},
         },
+        { provide: 'AUTH_SERVICE', useValue: authService },
       ],
     }).compile();
 

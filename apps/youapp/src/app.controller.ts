@@ -26,6 +26,16 @@ import {
 import { ProfileAndUser } from '@app/shared/interfaces/profile-and-user';
 import { UpdateProfileDto } from './dto/update-profile.dto';
 import { HoroscopeZodiac } from '../../../libs/shared/src/interfaces/horoscope-zodiac.interface';
+import {
+  ApiBadRequestResponse,
+  ApiCreatedResponse,
+  ApiHeader,
+  ApiInternalServerErrorResponse,
+  ApiNotFoundResponse,
+  ApiOkResponse,
+  ApiTags,
+} from '@nestjs/swagger';
+import { BirthdayDto } from './dto/birthday.dto';
 
 @Controller('api')
 export class AppController {
@@ -35,6 +45,17 @@ export class AppController {
   ) {}
 
   @Post('register')
+  @ApiTags('Authentification')
+  @ApiCreatedResponse({
+    description: 'Register successfully',
+    content: {
+      'application/json': {
+        example: {
+          isOk: true,
+        },
+      },
+    },
+  })
   async register(
     @Res() res: Response,
     @Body() createUserDto: CreateUserDto,
@@ -54,6 +75,33 @@ export class AppController {
   }
 
   @Post('login')
+  @ApiTags('Authentification')
+  @ApiOkResponse({
+    description: 'Login successfully',
+    content: {
+      'application/json': {
+        example: {
+          isOk: true,
+          data: {
+            accessToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9',
+            refreshToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9',
+          },
+        },
+      },
+    },
+  })
+  @ApiBadRequestResponse({
+    description: 'Invalid username, email or password',
+    content: {
+      'application/json': {
+        example: {
+          isOk: false,
+          errorCode: 2004,
+          message: 'Invalid username, email or password',
+        },
+      },
+    },
+  })
   async login(
     @Res() res: Response,
     @Body() loginUserDto: LoginUserDto,
@@ -62,7 +110,7 @@ export class AppController {
       this.authService.send('login', loginUserDto),
     );
     const isJwtValid = jwt !== null;
-    return res.status(!jwt ? 401 : 200).json({
+    return res.status(!jwt ? 400 : 200).json({
       isOk: isJwtValid,
       message: !isJwtValid ? 'Invalid username, email or password' : undefined,
       errorCode: !isJwtValid ? 2004 : undefined,
@@ -71,6 +119,34 @@ export class AppController {
   }
 
   @Get('getProfile')
+  @ApiTags('Profile')
+  @ApiHeader({
+    name: 'x-access-token',
+    description: 'with bearer prefix',
+    required: true,
+  })
+  @ApiCreatedResponse({
+    description: 'Get profile successfully',
+    content: {
+      'application/json': {
+        example: {
+          isOk: true,
+        },
+      },
+    },
+  })
+  @ApiNotFoundResponse({
+    description: 'Profile not found',
+    content: {
+      'application/json': {
+        example: {
+          isOk: false,
+          errorCode: 1000,
+          message: 'Profile not found',
+        },
+      },
+    },
+  })
   @UseGuards(AuthGuard)
   async getProfile(
     @Req() req: AuthRequest,
@@ -93,6 +169,36 @@ export class AppController {
   }
 
   @Put('updateProfile')
+  @ApiTags('Profile')
+  @ApiHeader({
+    name: 'x-access-token',
+    description: 'with bearer prefix',
+    required: true,
+  })
+  @ApiBadRequestResponse({
+    description: 'Birthday is not in the format of YYYY-MM-DD',
+    content: {
+      'application/json': {
+        example: {
+          isOk: false,
+          errorCode: 1003,
+          message: 'Birthday is not in the format of YYYY-MM-DD',
+        },
+      },
+    },
+  })
+  @ApiInternalServerErrorResponse({
+    description: 'Failed to update profile',
+    content: {
+      'application/json': {
+        example: {
+          isOk: false,
+          errorCode: 1002,
+          message: 'Failed to update profile',
+        },
+      },
+    },
+  })
   @UseGuards(AuthGuard)
   async update(
     @Req() req: AuthRequest,
@@ -127,9 +233,60 @@ export class AppController {
   }
 
   @Post('askHoroscopeZodiac')
+  @ApiTags('Utilities')
+  @ApiOkResponse({
+    description: 'Get horoscope and zodiac successfully',
+    content: {
+      'application/json': {
+        example: {
+          isOk: true,
+          data: {
+            horoscope: 'Capricorn',
+            zodiac: 'Dragon',
+          },
+        },
+      },
+    },
+  })
+  @ApiBadRequestResponse({
+    description: 'Birthday is required',
+    content: {
+      'application/json': {
+        example: {
+          isOk: false,
+          errorCode: 1004,
+          message: 'Birthday is required',
+        },
+      },
+    },
+  })
+  @ApiBadRequestResponse({
+    description: 'Birthday is not in the format of YYYY-MM-DD',
+    content: {
+      'application/json': {
+        example: {
+          isOk: false,
+          errorCode: 1005,
+          message: 'Birthday is not in the format of YYYY-MM-DD',
+        },
+      },
+    },
+  })
+  @ApiInternalServerErrorResponse({
+    description: 'Failed to get horoscope and/or zodiac',
+    content: {
+      'application/json': {
+        example: {
+          isOk: false,
+          errorCode: 1006,
+          message: 'Failed to get horoscope and/or zodiac',
+        },
+      },
+    },
+  })
   async askHoroscopeZodiac(
     @Res() res: Response,
-    @Body() body: { birthday: string },
+    @Body() body: BirthdayDto,
   ): Promise<Response> {
     if (!body.birthday) {
       return res.status(400).json({
@@ -164,8 +321,41 @@ export class AppController {
   }
 
   @Get('profiles')
+  @ApiTags('Profile')
+  @ApiHeader({
+    name: 'x-access-token',
+    description: 'with bearer prefix',
+    required: true,
+  })
+  @ApiOkResponse({
+    description: 'Get all profiles successfully',
+    content: {
+      'application/json': {
+        example: {
+          isOk: true,
+          data: [
+            {
+              id: '60f0b0b3e6b3c3b3b4b3b3b3',
+              name: 'John Doe',
+              birthday: '2000-01-01',
+              username: 'johndoe',
+            },
+            {
+              id: '60f0b0b3e6b3c3b3b4b3b3b4',
+              name: 'Jane Doe',
+              birthday: '2000-01-02',
+              username: 'janedoe',
+            },
+          ],
+        },
+      },
+    },
+  })
   @UseGuards(AuthGuard)
-  async getAllProfile(@Req() req: AuthRequest, @Res() res: Response) {
+  async getAllProfile(
+    @Req() req: AuthRequest,
+    @Res() res: Response,
+  ): Promise<Response> {
     const jwtPayload = req.payload;
     let profiles: Profile[] = await firstValueFrom(
       this.userService.send('get-all-profiles', jwtPayload.sub),
@@ -180,6 +370,38 @@ export class AppController {
   }
 
   @Get('refresh')
+  @ApiTags('Authentification')
+  @ApiHeader({
+    name: 'x-refresh-token',
+    description: 'with bearer prefix',
+    required: true,
+  })
+  @ApiOkResponse({
+    description: 'Refresh token successfully',
+    content: {
+      'application/json': {
+        example: {
+          isOk: true,
+          data: {
+            accessToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9',
+            refreshToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9',
+          },
+        },
+      },
+    },
+  })
+  @ApiBadRequestResponse({
+    description: 'Invalid refresh token',
+    content: {
+      'application/json': {
+        example: {
+          isOk: false,
+          errorCode: 2005,
+          message: 'Invalid refresh token',
+        },
+      },
+    },
+  })
   async refreshToken(
     @Req() req: AuthRequest,
     @Res() res: Response,
