@@ -4,6 +4,7 @@ import { AppService } from './app.service';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ClientProxyFactory, Transport } from '@nestjs/microservices';
 import { JwtModule } from '@nestjs/jwt';
+import { AuthModule } from 'apps/auth/src/auth.module';
 
 @Module({
   imports: [
@@ -12,6 +13,7 @@ import { JwtModule } from '@nestjs/jwt';
       isGlobal: true,
     }),
     JwtModule,
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [
@@ -44,27 +46,6 @@ import { JwtModule } from '@nestjs/jwt';
         const PASSWORD = configService.get('RABBITMQ_PASS');
         const HOST = configService.get('RABBITMQ_HOST');
         const QUEUE = configService.get('RABBITMQ_USER_QUEUE');
-
-        return ClientProxyFactory.create({
-          transport: Transport.RMQ,
-          options: {
-            urls: [`amqp://${USER}:${PASSWORD}@${HOST}`],
-            queue: QUEUE,
-            queueOptions: {
-              durable: true,
-            },
-          },
-        });
-      },
-      inject: [ConfigService],
-    },
-    {
-      provide: 'GRIDFS_SERVICE',
-      useFactory: (configService: ConfigService) => {
-        const USER = configService.get('RABBITMQ_USER');
-        const PASSWORD = configService.get('RABBITMQ_PASS');
-        const HOST = configService.get('RABBITMQ_HOST');
-        const QUEUE = configService.get('RABBITMQ_GRIDFS_QUEUE');
 
         return ClientProxyFactory.create({
           transport: Transport.RMQ,

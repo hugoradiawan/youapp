@@ -1,7 +1,7 @@
 import { CreateUserDto } from '@app/shared/dto/create-user.dto';
 import { EmailAndUsernameDto } from '@app/shared/dto/emailAndUsername.dto';
 import { User } from '@app/shared/interfaces/user.interface';
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Profile } from './interfaces/profile.interface';
@@ -17,7 +17,9 @@ import { ZodiacEndDocument } from './interfaces/zodiac-end.interface';
 import { zodiacList } from './enums/zodiac.enum';
 import { zodiacEndList } from './constants/zodiac-end-init.constant';
 import { UpdateProfileDto } from 'apps/youapp/src/dto/update-profile.dto';
-// import * as bcrypt from 'bcrypt';
+import { UpdatePassword } from './dto/update-password.dto';
+import { ClientProxy } from '@nestjs/microservices';
+import { firstValueFrom } from 'rxjs';
 
 @Injectable()
 export class UserService {
@@ -26,11 +28,14 @@ export class UserService {
     @InjectModel('Profile') private readonly profileModel: Model<Profile>,
     @InjectModel('ZodiacEnd')
     private readonly zodiacEndModel: Model<ZodiacEndDocument>,
+    @Inject('AUTH_SERVICE') private readonly authService: ClientProxy,
   ) {}
 
   async create(createUserDto: CreateUserDto): Promise<string | undefined> {
     const createdUser = new this.userModel(createUserDto);
-    // createdUser.password = await bcrypt.hash(createdUser.password, 10);
+    createdUser.password = await firstValueFrom(
+      this.authService.send('hash-password', createUserDto.password),
+    );
     const result = await createdUser.save();
     this.createProfile(result._id.toString(), {});
     return result._id.toString();
@@ -52,19 +57,6 @@ export class UserService {
   async getProfileNames(
     ids: string[],
   ): Promise<{ id: string; name: string }[]> {
-    console.log('ids', ids);
-    // get all profiles with id in ids
-    console.log(
-      'data',
-      (await this.profileModel.find({ _id: { $in: ids } }).exec()).map(
-        (profile) => {
-          return {
-            id: profile._id.toString(),
-            name: profile.name,
-          };
-        },
-      ),
-    );
     return (await this.profileModel.find({ _id: { $in: ids } }).exec()).map(
       (profile) => {
         return {
@@ -104,9 +96,7 @@ export class UserService {
     const profile = await this.profileModel.findOne({ userId }).exec();
     if (!profile) return [];
     const profiles = await this.profileModel
-      .find({
-        _id: { $ne: profile._id },
-      })
+      .find({ _id: { $ne: profile._id } })
       .exec();
     return profiles;
   }
@@ -116,10 +106,22 @@ export class UserService {
       this.profileModel.findOne({ userId }).exec(),
       this.userModel.findById(userId).exec(),
     ]);
-    if (!profile || !user) {
-      return null;
-    }
+    if (profile == null || user == null) return { profile: null, user: null };
     return { profile, user };
+  }
+
+  async updatePassword(data: UpdatePassword): Promise<boolean> {
+    const result = await this.userModel.updateOne(
+      { _id: data.userId },
+      { password: data.password },
+    );
+    if (result.acknowledged === false) return false;
+    return result.modifiedCount === 1;
+  }
+
+  async isUserIdExist(userId: string): Promise<boolean> {
+    const result = await this.userModel.findById(userId).exec();
+    return result !== null;
   }
 
   private async getHoroscope(dob: string): Promise<Horoscope> {
@@ -172,13 +174,10 @@ export class UserService {
     userId: string,
     updateProfileDto: UpdateProfileDto,
   ): Promise<boolean> {
-    console.log('updateProfileDto', updateProfileDto);
-    console.log('userId', userId);
     const result = await this.profileModel.updateOne(
       { userId: String(userId) },
       updateProfileDto,
     );
-    console.log('result', result);
     if (result.acknowledged === false) return false;
     return result.modifiedCount === 1;
   }

@@ -21,7 +21,6 @@ export class ChatGateway {
     @ConnectedSocket() client: Socket,
   ): Promise<void> {
     const room = await this.chatService.createRoom(data.users);
-    console.log(room);
     client.join(room._id.toString());
     const messages = await this.chatService.getMessage(room._id.toString());
     this.server.to(room._id.toString()).emit('getMessages', messages);
@@ -39,7 +38,6 @@ export class ChatGateway {
     @MessageBody() data: { userId: string; roomId: string },
     @ConnectedSocket() client: Socket,
   ): Promise<void> {
-    console.log(data);
     const list = await this.chatService.getList(data.userId);
     client.send(list);
     client.leave(data.roomId);

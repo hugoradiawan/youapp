@@ -12,7 +12,6 @@ export class SharedService {
     const event = JSON.parse(
       message.content.toString(),
     ) as RabbitMQMessage<any>;
-    console.log(event);
     return new RmqData<T>(channel, message as Message, event);
   }
 }

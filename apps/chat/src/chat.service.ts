@@ -50,7 +50,6 @@ export class ChatService {
     const names: { id: string; name: string }[] = await firstValueFrom(
       this.userService.send('get-profile-names', profileIds),
     );
-    console.log('names', names);
     const result = rooms.map((room) => {
       const proIds = room.users.filter((user) => user !== userId);
       return {
@@ -63,7 +62,6 @@ export class ChatService {
         lastMesage: room.lastMessage,
       } as Chat;
     });
-    console.log(result);
     return result;
   }
 

@@ -1,34 +1,45 @@
 import { AuthRequest } from '@app/shared/types/auth-request.type';
-import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
-import { JwtService } from '@nestjs/jwt';
-import { jwtConstants } from 'apps/auth/src/constants';
+import {
+  CanActivate,
+  ExecutionContext,
+  Inject,
+  Injectable,
+} from '@nestjs/common';
+import { ClientProxy } from '@nestjs/microservices';
 import { JwtPayload } from 'apps/auth/src/interface/jwt.interface';
 import { Request } from 'express';
+import { firstValueFrom } from 'rxjs';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
-  constructor(private readonly jwtService: JwtService) {}
+  constructor(
+    @Inject('AUTH_SERVICE') private readonly authService: ClientProxy,
+  ) {}
+
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest<AuthRequest>();
-    const token = this.extractTokenFromHeader(request);
-    if (!token) {
-      return Promise.resolve(false);
-    }
+    const token = this.extractBearerTokenFromHeader(request);
+    if (!token) return false;
     try {
-      const payload = await this.jwtService.verifyAsync<JwtPayload>(
-        token,
-        jwtConstants,
+      const payload: JwtPayload = await firstValueFrom(
+        this.authService.send('validate', token),
       );
+      if (!payload) return false;
       request.payload = payload;
-      return Promise.resolve(true);
+      return true;
     } catch (error) {
       console.log(error);
-      return Promise.resolve(false);
+      return false;
     }
   }
 
-  private extractTokenFromHeader(request: Request): string | undefined {
+  private extractBearerTokenFromHeader(request: Request): string | undefined {
     const token = request.headers['x-access-token'] as string | undefined;
-    return token;
+    if (!token || token === undefined) return undefined;
+    const tokenParts = token.split(' ');
+    if (tokenParts.length !== 2 || tokenParts[0] !== 'Bearer') {
+      return undefined;
+    }
+    return tokenParts[1];
   }
 }

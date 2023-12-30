@@ -8,7 +8,8 @@ import { firstValueFrom } from 'rxjs';
 import { LoginUserDto } from '../../../libs/shared/src/interfaces/login-user.dto';
 import { Jwt, JwtPayload } from './interface/jwt.interface';
 import { JwtService } from '@nestjs/jwt';
-// import * as bcrypt from 'bcrypt';
+import { Scrypt } from 'apps/user/src/scrypt';
+import { UpdatePassword } from 'apps/user/src/dto/update-password.dto';
 
 @Injectable()
 export class AuthService {
@@ -47,8 +48,62 @@ export class AuthService {
       loginUserDto.password,
     );
     if (user === null) return undefined;
-    const payload = { sub: user._id } satisfies JwtPayload;
-    return { accessToken: this.jwtService.sign(payload) } satisfies Jwt;
+    const payload = { sub: user._id.toString() } satisfies JwtPayload;
+    return this.generateJWT(payload);
+  }
+
+  async generateJWT(payload: JwtPayload): Promise<Jwt> {
+    const [accessToken, refreshToken] = await Promise.all([
+      this.jwtService.signAsync(payload, {
+        expiresIn: '15m',
+        secret: process.env.JWT_ACCESS_SECRET,
+      }),
+      this.jwtService.signAsync(payload, {
+        expiresIn: '7d',
+        secret: process.env.JWT_REFRESH_SECRET,
+      }),
+    ]);
+    return { accessToken, refreshToken } satisfies Jwt;
+  }
+
+  async refresh(refreshToken: string): Promise<Jwt | undefined> {
+    try {
+      // check if refresh token have bearer prefix
+      if (refreshToken.startsWith('Bearer ')) {
+        refreshToken = refreshToken.split(' ')[1];
+      } else {
+        return undefined;
+      }
+      const payload = await this.jwtService.verifyAsync<JwtPayload>(
+        refreshToken,
+        {
+          secret: process.env.JWT_REFRESH_SECRET,
+        },
+      );
+      return this.generateJWT({ sub: payload.sub } satisfies JwtPayload);
+    } catch (error) {
+      console.log(error);
+      return undefined;
+    }
+  }
+
+  async validateJwt(jwt: string): Promise<JwtPayload | undefined> {
+    try {
+      const payload = await this.jwtService.verifyAsync<JwtPayload>(jwt, {
+        secret: process.env.JWT_ACCESS_SECRET,
+      });
+      const isUserExist: boolean = await firstValueFrom(
+        this.userService.send('is-userid-exist', payload.sub),
+      );
+      if (!isUserExist) return undefined;
+      return payload;
+    } catch (error) {
+      return undefined;
+    }
+  }
+
+  async hashPassword(password: string): Promise<string> {
+    return Scrypt.hashPassword(password);
   }
 
   private async validateUser(
@@ -62,8 +117,21 @@ export class AuthService {
       } as EmailAndUsernameDto),
     );
     if (user === null) return null;
-    // const isPasswordMatched = await bcrypt.compare(password, user.password);
-    const isPasswordMatched = password === user.password;
-    return isPasswordMatched ? user : null;
+    const isPasswordMatched = await Scrypt.verifyPassword(
+      password,
+      user.password,
+    );
+    if (isPasswordMatched) {
+      const newPassword = await this.hashPassword(password);
+      const result: boolean = await firstValueFrom(
+        this.userService.send('update-password', {
+          userId: user._id,
+          password: newPassword,
+        } as UpdatePassword),
+      );
+      return result ? user : null;
+    } else {
+      return null;
+    }
   }
 }

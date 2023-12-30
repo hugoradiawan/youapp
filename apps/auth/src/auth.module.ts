@@ -4,7 +4,6 @@ import { AuthService } from './auth.service';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { ClientProxyFactory, Transport } from '@nestjs/microservices';
 import { JwtModule } from '@nestjs/jwt';
-import { jwtConstants } from './constants';
 import { SharedModule } from '@app/shared';
 
 @Module({
@@ -13,11 +12,7 @@ import { SharedModule } from '@app/shared';
       envFilePath: '.env',
       isGlobal: true,
     }),
-    JwtModule.register({
-      global: true,
-      secret: jwtConstants.secret,
-      signOptions: { expiresIn: '2 days' },
-    }),
+    JwtModule.register({}),
     SharedModule,
   ],
   controllers: [AuthController],
@@ -36,9 +31,7 @@ import { SharedModule } from '@app/shared';
           options: {
             urls: [`amqp://${USER}:${PASSWORD}@${HOST}`],
             queue: QUEUE,
-            queueOptions: {
-              durable: true,
-            },
+            queueOptions: { durable: true },
           },
         });
       },

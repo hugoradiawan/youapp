@@ -42,7 +42,6 @@ export class AppController {
     const result: boolean | ErrorData = await firstValueFrom(
       this.authService.send('register', createUserDto),
     );
-    console.log('result', result);
     if ((result as ErrorData).statusCode) {
       return this.buildErrorReponse(
         res,
@@ -101,12 +100,9 @@ export class AppController {
     @Body() updateProfileDto: UpdateProfileDto,
   ): Promise<Response> {
     const jwtPayload = req.payload;
-    console.log('payload', jwtPayload);
     let toupdate: UpdateProfileDto & HoroscopeZodiac = updateProfileDto;
-    console.log('toupdate', toupdate);
     if (Object.keys(toupdate).length === 0) return res.status(200).send();
     if (updateProfileDto.birthday) {
-      console.log('birthday', updateProfileDto.birthday);
       if (!/^\d{4}-\d{2}-\d{2}$/.exec(updateProfileDto.birthday)) {
         return res.status(400).json({
           isOk: false,
@@ -120,16 +116,13 @@ export class AppController {
         horoscope: result?.horoscope,
         zodiac: result?.zodiac,
       };
-      console.log('toupdate', toupdate);
     }
-    console.log(toupdate);
     const isOk: boolean = await firstValueFrom(
       this.userService.send('update-profile', {
         userId: jwtPayload.sub,
         ...toupdate,
       } as UpdateProfileDto & HoroscopeZodiac & { userId: string }),
     );
-    console.log('isOk', isOk);
     return res.status(isOk ? 200 : 400).send();
   }
 
@@ -184,6 +177,23 @@ export class AppController {
     };
 
     return res.status(200).json(response);
+  }
+
+  @Get('refresh')
+  async refreshToken(
+    @Req() req: AuthRequest,
+    @Res() res: Response,
+  ): Promise<Response> {
+    const jwt = await firstValueFrom(
+      this.authService.send('refresh', req.headers['x-refresh-token']),
+    );
+    const isJwtValid = jwt !== null;
+    return res.status(!jwt ? 401 : 200).json({
+      isOk: isJwtValid,
+      message: !isJwtValid ? 'Invalid refresh token' : undefined,
+      errorCode: !isJwtValid ? 2005 : undefined,
+      data: !isJwtValid ? undefined : jwt,
+    } satisfies ServerResponse<Jwt>);
   }
 
   private getHoroscopeZodiac(

@@ -8,6 +8,7 @@ import { SharedService } from '@app/shared';
 import { ProfileAndUser } from '@app/shared/interfaces/profile-and-user';
 import { HoroscopeZodiac } from '@app/shared/interfaces/horoscope-zodiac.interface';
 import { UpdateProfileDto } from 'apps/youapp/src/dto/update-profile.dto';
+import { UpdatePassword } from './dto/update-password.dto';
 
 @Controller()
 export class UserController {
@@ -20,29 +21,30 @@ export class UserController {
   async register(@Ctx() context: RmqContext): Promise<User | null> {
     const extractData =
       this.sharedService.extractData<EmailAndUsernameDto>(context);
-    console.log(extractData.data);
-    const result = await this.userService.findOneByEmailOrByUsername(
-      extractData.data,
-    );
-    if (result === null) {
-      extractData.ack();
-      return null;
-    } else {
+    try {
+      const result = await this.userService.findOneByEmailOrByUsername(
+        extractData.data,
+      );
       extractData.ack();
       return result;
+    } catch (error) {
+      console.log(error);
+      extractData.nack();
+      return null;
     }
   }
 
   @MessagePattern('create-user')
   async createUser(@Ctx() context: RmqContext) {
     const extractData = this.sharedService.extractData<CreateUserDto>(context);
-    const result = await this.userService.create(extractData.data);
-    if (result === null) {
-      extractData.nack();
-      return null;
-    } else {
+    try {
+      const result = await this.userService.create(extractData.data);
       extractData.ack();
       return result;
+    } catch (error) {
+      console.log(error);
+      extractData.nack();
+      return null;
     }
   }
 
@@ -51,13 +53,14 @@ export class UserController {
     @Ctx() context: RmqContext,
   ): Promise<ProfileAndUser | null> {
     const extractData = this.sharedService.extractData<string>(context);
-    const result = await this.userService.getProfileAndUser(extractData.data);
-    if (result === null) {
-      extractData.nack();
-      return null;
-    } else {
+    try {
+      const result = await this.userService.getProfileAndUser(extractData.data);
       extractData.ack();
       return result;
+    } catch (error) {
+      console.log(error);
+      extractData.nack();
+      return null;
     }
   }
 
@@ -66,13 +69,16 @@ export class UserController {
     @Ctx() context: RmqContext,
   ): Promise<HoroscopeZodiac | null> {
     const extractData = this.sharedService.extractData<string>(context);
-    const result = this.userService.getHoroscopeZodiac(extractData.data);
-    if (result === null) {
-      extractData.nack();
-      return null;
-    } else {
+    try {
+      const result = await this.userService.getHoroscopeZodiac(
+        extractData.data,
+      );
       extractData.ack();
       return result;
+    } catch (error) {
+      console.log(error);
+      extractData.nack();
+      return null;
     }
   }
 
@@ -83,29 +89,32 @@ export class UserController {
     >(context);
     const toUpdate = { ...extractData.data };
     delete toUpdate.userId;
-    const result = await this.userService.updateProfile(
-      extractData.data.userId,
-      toUpdate,
-    );
-    if (result === false) {
+
+    try {
+      const result = await this.userService.updateProfile(
+        extractData.data.userId,
+        toUpdate,
+      );
+      extractData.ack();
+      return result;
+    } catch (error) {
+      console.log(error);
       extractData.nack();
       return false;
-    } else {
-      extractData.ack();
-      return true;
     }
   }
 
   @MessagePattern('get-all-profiles')
   async getAllProfile(@Ctx() context: RmqContext) {
     const extractData = this.sharedService.extractData<string>(context);
-    const result = await this.userService.findAllProfile(extractData.data);
-    if (result === null) {
-      extractData.nack();
-      return null;
-    } else {
+    try {
+      const result = await this.userService.findAllProfile(extractData.data);
       extractData.ack();
       return result;
+    } catch (error) {
+      console.log(error);
+      extractData.nack();
+      return [];
     }
   }
 
@@ -114,14 +123,43 @@ export class UserController {
     @Ctx() context: RmqContext,
   ): Promise<{ id: string; name: string }[]> {
     const extractData = this.sharedService.extractData<string[]>(context);
-    const result: { id: string; name: string }[] =
-      await this.userService.getProfileNames(extractData.data);
-    if (result === null) {
-      extractData.ack();
-      return [];
-    } else {
+    try {
+      const result: { id: string; name: string }[] =
+        await this.userService.getProfileNames(extractData.data);
       extractData.ack();
       return result;
+    } catch (error) {
+      console.log(error);
+      extractData.nack();
+      return [];
+    }
+  }
+
+  @MessagePattern('update-password')
+  async updatePassword(@Ctx() context: RmqContext) {
+    const extractData = this.sharedService.extractData<UpdatePassword>(context);
+    try {
+      const result = await this.userService.updatePassword(extractData.data);
+      extractData.ack();
+      return result;
+    } catch (error) {
+      console.log(error);
+      extractData.nack();
+      return false;
+    }
+  }
+
+  @MessagePattern('is-userid-exist')
+  async isUserIdExist(@Ctx() context: RmqContext) {
+    const extractData = this.sharedService.extractData<string>(context);
+    try {
+      const result = await this.userService.isUserIdExist(extractData.data);
+      extractData.ack();
+      return result;
+    } catch (error) {
+      console.log(error);
+      extractData.nack();
+      return false;
     }
   }
 }
