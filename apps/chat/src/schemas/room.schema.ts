@@ -14,6 +14,12 @@ export const RoomSchema = new Schema({
         customProperties: [],
       },
       createdAt: String,
+      medias: [
+        {
+          type: { type: String },
+          fileName: String,
+        },
+      ],
     },
   ],
 });

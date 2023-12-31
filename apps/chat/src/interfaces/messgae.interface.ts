@@ -1,3 +1,5 @@
+import { Media } from './media.interface';
+
 export interface Message {
   text?: string;
   roomId?: string;
@@ -8,4 +10,5 @@ export interface Message {
     customProperties: { [id: string]: any };
   };
   createdAt: string;
+  medias?: Media[];
 }

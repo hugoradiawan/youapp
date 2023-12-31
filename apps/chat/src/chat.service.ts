@@ -67,12 +67,11 @@ export class ChatService {
 
   async saveMessage(message: Message): Promise<boolean> {
     const room = await this.roomModel.findOne({ _id: message.roomId }).exec();
-    if (!room) {
-      return false;
-    }
+    if (!room) return false;
     room.lastMessage = message.text;
     const tempMsg = { ...message };
     delete tempMsg.roomId;
+    console.log(tempMsg);
     room.message.push(message);
     await room.save();
     return true;
