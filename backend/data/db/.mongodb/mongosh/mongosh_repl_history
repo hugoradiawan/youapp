@@ -1,0 +1,60 @@
+db.rooms.find()
+cls
+db.rooms.find()
+cls
+clear
+db.dropDatabase()
+use youapp
+db.dropDatabase()
+db.rooms.find()
+db.dropDatabase()
+cls
+db.rooms.find()
+db.profiles.find()
+clear
+cls
+clear
+db.dropDatabase()
+cls
+db.rooms.find()
+cls
+db.rooms.find()
+use youapp
+db.rooms.find()
+use youapp
+db.rooms.find()
+db.profiles.find()
+db.dropDatabase()
+db.rooms.find()
+cls
+db.rooms.deleteMany({})
+db.rooms.find()
+show collections
+db.rooms.find()
+db.dropDatabase()
+use youapp
+cls
+db.profiles.find()
+db.users.find()
+db.dropDatabase()
+db.users.find()
+db.profiles.find()
+db.dropDatabase()
+db.profiles.find()
+db.users.find()
+use youapp
+db.dropDatabase()
+db.dropdatabase()
+use youapp
+db.users.find()
+use youapp
+db.rooms.deleteMany({})
+db.rooms.find()
+db.rooms.deleteMany({})
+db.users.find()
+show collections
+use youapp
+show collections
+db.users.find()
+show collections
+use youapp
