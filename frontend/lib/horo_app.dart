@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-import 'package:horoflutter/ui_loc/main_binding.dart';
+import 'package:horoflutter/main_binding.dart';
 import 'package:horoflutter/user_switcher.dart';
 
 class HoroApp extends StatelessWidget {

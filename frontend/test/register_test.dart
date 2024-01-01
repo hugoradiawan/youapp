@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/src/storage_impl.dart';
-import 'package:horoflutter/business_loc/auth_controller.dart';
-import 'package:horoflutter/business_loc/create_user_dto.dart';
-import 'package:horoflutter/business_loc/nestjs_connect.dart';
+import 'package:horoflutter/shared/auth_controller.dart';
+import 'package:horoflutter/client/create_user_dto.dart';
+import 'package:horoflutter/client/nestjs_connect.dart';
 import 'package:mockito/mockito.dart';
 
 class _MockNestJsConnect extends NestJsConnect with Mock {
