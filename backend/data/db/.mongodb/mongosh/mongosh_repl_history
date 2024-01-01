@@ -1,6 +1,0 @@
-cls
-db.dropDatabase()
-db.dropdatabase({})
-db.dropdatabase({})\
-db.dropdatabase()
-use youapp
