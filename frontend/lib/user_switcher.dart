@@ -12,7 +12,7 @@ class UserSwitcher extends GetView<AuthController> {
   Widget build(_) => Obx(
         () => Navigator(
           pages: [
-            if (controller.accessToken.value == null)
+            if (controller.jwt.value == null)
               MaterialPage(child: LoginRegisterPage())
             else if (controller.profile.value?.isEmpty() ?? true)
               const MaterialPage(child: ProfilePage())

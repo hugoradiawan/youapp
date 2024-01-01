@@ -73,7 +73,7 @@ void main() {
     test('returns true when the response status is ok', () async {
       final mockNestJsConnect = _MockNestJsConnect(ip: 'localhost');
       final result = await mockNestJsConnect.login(loginUserDto);
-      expect(Get.find<AuthController>().accessToken.value, 'accessToken');
+      expect(Get.find<AuthController>().jwt.value?.accessToken, 'accessToken');
       expect(result, isTrue);
     });
 
@@ -81,7 +81,7 @@ void main() {
       final mockNestJsConnect =
           _MockNestJsConnect(ip: 'localhost', isRespondingOk: false);
       final result = await mockNestJsConnect.login(loginUserDto);
-      expect(Get.find<AuthController>().accessToken.value, isNull);
+      expect(Get.find<AuthController>().jwt.value?.accessToken, isNull);
       expect(result, isFalse);
     });
   });

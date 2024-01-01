@@ -24,9 +24,7 @@ class ProfileContent extends StatelessWidget {
                 centerTitle: true,
                 backgroundColor: Colors.transparent,
                 title: InkWell(
-                  onTap: () async {
-                    Get.find<AuthController>().erase();
-                  },
+                  onTap: Get.find<AuthController>().logout,
                   child: Obx(
                     () => Text(
                       '@${Get.find<AuthController>().username}',

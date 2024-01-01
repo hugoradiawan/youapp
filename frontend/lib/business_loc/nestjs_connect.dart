@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:get/get_connect/http/src/request/request.dart';
 import 'package:horoflutter/business_loc/ask_horoscope_zodiac_response.dart';
 import 'package:horoflutter/business_loc/auth_controller.dart';
 import 'package:horoflutter/business_loc/create_user_dto.dart';
@@ -9,23 +10,48 @@ import 'package:horoflutter/business_loc/jwt.dart';
 import 'package:horoflutter/business_loc/login_user_dto.dart';
 import 'package:horoflutter/business_loc/profile.dart';
 import 'package:horoflutter/business_loc/server_response.dart';
+import 'package:logger/logger.dart';
 
 class NestJsConnect extends GetConnect {
   static const port = 3000;
   static const gridFsPort = 3001;
   final String ip;
+  final RxBool isRefreshingToken = false.obs;
 
   NestJsConnect({required this.ip});
   @override
   void onInit() {
-    httpClient.baseUrl = 'http://$ip:$port/api/';
-    httpClient.addRequestModifier<dynamic>((request) {
-      final String? token = Get.find<AuthController>().accessToken.value;
-      if (token != null) {
-        request.headers['x-access-token'] = 'Bearer $token';
+    isRefreshingToken.listen((val) async {
+      if (val) {
+        if (Get.find<AuthController>().jwt.value == null) return;
+        Get.find<AuthController>().jwt.value = await refreshToken(
+            Get.find<AuthController>().jwt.value!.refreshToken);
+        isRefreshingToken.value = false;
       }
-      return request;
     });
+    httpClient.baseUrl = 'http://$ip:$port/api/';
+    httpClient.addRequestModifier<dynamic>(authInterceptor);
+  }
+
+  Future<Request> authInterceptor(Request request) async {
+    final AuthController ac = Get.find<AuthController>();
+    Jwt? jwt = ac.jwt.value;
+    if (jwt != null) {
+      if (DateTime.now()
+                  .subtract(const Duration(seconds: 30))
+                  .millisecondsSinceEpoch /
+              1000 >
+          jwt.accessTokenExpiration) {
+        if (isRefreshingToken.value == false) {
+          isRefreshingToken.value = true;
+          while (isRefreshingToken.value) {
+            await Future<void>.delayed(const Duration(milliseconds: 500));
+          }
+        }
+      }
+      request.headers['x-access-token'] = 'Bearer ${jwt.accessToken}';
+    }
+    return request;
   }
 
   String get gridFsUrl => 'http://$ip:$gridFsPort/api/';
@@ -73,7 +99,7 @@ class NestJsConnect extends GetConnect {
       }
       return profiles;
     } else {
-      handleError(res);
+      // handleError(res);
       return [];
     }
   }
@@ -93,12 +119,25 @@ class NestJsConnect extends GetConnect {
     if (res.status.isOk) {
       final ServerResponse<Jwt> serverResponse =
           ServerResponse.fromJson(res.body, fromJson: (json) => Jwt(json));
-      Get.find<AuthController>()
-          .updateAccessToken(serverResponse.data?.accessToken);
+      Get.find<AuthController>().updateJwt(serverResponse.data);
       return true;
     } else {
       handleError(res);
       return false;
+    }
+  }
+
+  Future<Jwt?> refreshToken(String refreshToken) async {
+    final Response res = await get('refresh', headers: {
+      'x-refresh-token': 'Bearer $refreshToken',
+    });
+    if (res.status.isOk) {
+      final ServerResponse<Jwt> serverResponse =
+          ServerResponse.fromJson(res.body, fromJson: (json) => Jwt(json));
+      Logger().i('refreshed token: ${serverResponse.data?.toJson()}');
+      return serverResponse.data;
+    } else {
+      return null;
     }
   }
 
@@ -118,7 +157,7 @@ class NestJsConnect extends GetConnect {
         Get.find<AuthController>().profile.value = null;
         return null;
       } else {
-        handleError(res);
+        // handleError(res);
         return null;
       }
     }

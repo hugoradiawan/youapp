@@ -36,9 +36,7 @@ class HomePage extends StatelessWidget {
               ),
               actions: [
                 IconButton(
-                  onPressed: () {
-                    Get.find<AuthController>().erase();
-                  },
+                  onPressed: Get.find<AuthController>().logout,
                   icon: const Icon(
                     Icons.login,
                     color: Colors.white,

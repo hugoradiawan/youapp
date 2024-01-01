@@ -88,6 +88,8 @@ class MatchesPage extends StatelessWidget {
                                       const Gap(10),
                                       const Text(
                                         'Develop and make 3D Character Design for your game',
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
                                         style: TextStyle(
                                           color: Colors.white,
                                           fontSize: 14,
