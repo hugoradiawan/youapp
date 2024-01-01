@@ -162,4 +162,18 @@ export class UserController {
       return false;
     }
   }
+
+  @MessagePattern('is-username-exist')
+  async isUsernameExist(@Ctx() context: RmqContext) {
+    const extractData = this.sharedService.extractData<string>(context);
+    try {
+      const result = await this.userService.isUsernameExist(extractData.data);
+      extractData.ack();
+      return result;
+    } catch (error) {
+      console.log(error);
+      extractData.nack();
+      return false;
+    }
+  }
 }

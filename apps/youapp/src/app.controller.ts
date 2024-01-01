@@ -418,6 +418,20 @@ export class AppController {
     } satisfies ServerResponse<Jwt>);
   }
 
+  @Post('isUsernameExist')
+  async isUsernameExist(
+    @Body() data: { username: string },
+    @Res() res: Response,
+  ): Promise<Response> {
+    const result: boolean = await firstValueFrom(
+      this.userService.send('is-username-exist', data.username),
+    );
+    return res.status(200).json({
+      isOk: true,
+      data: result,
+    } satisfies ServerResponse<boolean>);
+  }
+
   private getHoroscopeZodiac(
     birthday: string,
   ): Promise<HoroscopeZodiac | null> {

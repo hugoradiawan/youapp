@@ -181,4 +181,9 @@ export class UserService {
     if (result.acknowledged === false) return false;
     return result.modifiedCount === 1;
   }
+
+  async isUsernameExist(username: string): Promise<boolean> {
+    const result = await this.userModel.findOne({ username }).exec();
+    return result !== null;
+  }
 }
