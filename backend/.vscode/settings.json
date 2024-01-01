@@ -21,5 +21,6 @@
     "peacock.color": "#dd0531",
     "conventionalCommits.scopes": [
         "  "
-    ]
+    ],
+    "git.ignoreLimitWarning": true
 }
