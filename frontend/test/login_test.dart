@@ -28,8 +28,8 @@ class _MockNestJsConnect extends NestJsConnect with Mock {
                 body: {
                   'isOk': true,
                   'data': {
-                    'accessToken': 'accessToken',
-                    'refreshToken': 'refreshToken'
+                    'accessToken': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2NTkyY2MzMTgxNDM0OWI4ZGMwNTUyOWQiLCJpYXQiOjE3MDQxMzA0MzcsImV4cCI6MTcwNDEzMDYxN30.dMZb4fvdlETZe8evg6ZjfgflITQFUFpDY8elvhfbyMg',
+                    'refreshToken': 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2NTkyY2MzMTgxNDM0OWI4ZGMwNTUyOWQiLCJpYXQiOjE3MDQxMzA0MzcsImV4cCI6MTcwNDczNTIzN30.fJfYCh0MYzXA22AA0PhcXGNeEThc91VG1iknjRN0jSA'
                   }
                 } as T,
               ),
@@ -73,7 +73,7 @@ void main() {
     test('returns true when the response status is ok', () async {
       final mockNestJsConnect = _MockNestJsConnect(ip: 'localhost');
       final result = await mockNestJsConnect.login(loginUserDto);
-      expect(Get.find<AuthController>().jwt.value?.accessToken, 'accessToken');
+      expect(Get.find<AuthController>().jwt.value?.accessToken, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI2NTkyY2MzMTgxNDM0OWI4ZGMwNTUyOWQiLCJpYXQiOjE3MDQxMzA0MzcsImV4cCI6MTcwNDEzMDYxN30.dMZb4fvdlETZe8evg6ZjfgflITQFUFpDY8elvhfbyMg');
       expect(result, isTrue);
     });
 
