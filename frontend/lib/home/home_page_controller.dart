@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:horoflutter/chat/chat_controller.dart';
+import 'package:horoflutter/client/nestjs_connect.dart';
 import 'package:horoflutter/profile/profile_controller.dart';
 
 class HomePageController extends GetxController
@@ -16,9 +17,8 @@ class HomePageController extends GetxController
       Get.find<ProfileController>().reload();
     }
     tabIndex.listen((p0) {
-      if (p0 == 0) {
-        Get.find<ChatController>().requestList();
-      }
+      if (p0 == 0) Get.find<ChatController>().requestList();
+      if (p0 == 3) Get.find<NestJsConnect>().getProfile();
     });
     super.onInit();
   }
